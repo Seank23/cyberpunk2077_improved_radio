@@ -1,6 +1,6 @@
 radioData = {
 
-    local radioStationNames = {
+    radioStationNames = {
         ["radio_station_01_att_rock"] = "107.3 Morro Rock Radio",
         ["radio_station_02_aggro_ind"] = "89.3 Radio Vexelstrom",
         ["radio_station_03_elec_ind"] = "92.9 Night FM",
@@ -14,7 +14,7 @@ radioData = {
         ["radio_station_11_metal"] = "96.1 Ritual FM"
     }
 
-    local radioStationSongs = {
+    radioStationSongs = {
         ["radio_station_01_att_rock"] = "0x0000CE51,0x0000CE52,0x0000CE53,0x0000CE55,0x0000CE56,0x0000CE57,0x0000CE58,0x0000CE59,0x0000CE5A,0x0000CE5B,0x0000CE5C,0x0000D06E,0x0000D06F,0x0000D071,0x0000D072",
         ["radio_station_02_aggro_ind"] = "0x0000CE5D,0x0000CE5F,0x0000CE60,0x0000CE61,0x0000CE62,0x0000CE63,0x0000CE64,0x0000CE65,0x0000CE66,0x0000CE67,0x0000CE68,0x0000CE69,0x0000CE6A,0x0001314F",
         ["radio_station_03_elec_ind"] = "0x0000CE6F,0x0000CE70,0x0000CE71,0x0000CE72,0x0000CE73,0x0000CE74,0x0000CE75,0x0000CE76,0x0000CE77,0x0000CE78,0x0000CE79,0x0000CE7A,0x0000CE7B",
@@ -28,7 +28,21 @@ radioData = {
         ["radio_station_11_metal"] = "0x0000CEBD,0x0000CEBE,0x0000CEBF,0x0000CEC0,0x0000CEC1,0x0000CEC2,0x0000CEC3,0x0000CEC4,0x0000CEC5,0x0000CEC6,0x0000CEC7,0x0000CEC8,0x0000CEC9,0x0000CECA"
     }
 
-    local songHashToInfo = {
+    radioStationCounts = {
+        ["radio_station_01_att_rock"] = 15,
+        ["radio_station_02_aggro_ind"] = 14,
+        ["radio_station_03_elec_ind"] = 13,
+        ["radio_station_04_hiphop"] = 21,
+        ["radio_station_05_pop"] = 13,
+        ["radio_station_06_minim_techno"] = 5,
+        ["radio_station_07_aggro_techno"] = 15,
+        ["radio_station_08_jazz"] = 9,
+        ["radio_station_09_downtempo"] = 17,
+        ["radio_station_10_latino"] = 11,
+        ["radio_station_11_metal"] = 14
+    }
+
+    songHashToInfo = {
         ["0x0000CE52"] = "mus_radio_01_att_rock_heaven_ho|Konrad OldMoney feat Frawst & XerzeX|Heave Ho",
         ["0x0000CE51"] = "mus_radio_01_att_rock_suffer_me|The Cold Stares & Brutus Backlash|Suffer Me",
         ["0x0000CE62"] = "mus_radio_02_aggro_ind_black_terminal_vox_upgrade|Blue Stahli and Danny Cocke & Black Terminal|Upgrade",
@@ -132,7 +146,7 @@ radioData = {
         ["0x0000CEC7"] = "mus_radio_11_metal_zurawie|Wydech (Ugory)|Zurawie",
         ["0x0000CEB7"] = "mus_radio_10_latino_tatted_on_my_face|Konrad OldMoney feat 37 Heartbreak & Don Mara|TATTED ON MY FACE",
         ["0x0000CEBB"] = "mus_radio_10_latino_only_son|Konrad OldMoney feat 37 Heartbreak & ChickyChickas|Only Son",
-        ["0x0000CEBC"] = "mus_radio_10_latino_westcoast_till_i_die|Konrad OldMoney & DJ CholoZ|WESTCOAST TIL I DIE"
+        ["0x0000CEBC"] = "mus_radio_10_latino_westcoast_till_i_die|Konrad OldMoney & DJ CholoZ|WESTCOAST TIL I DIE",
         ["0x0000CE9E"] = "mus_radio_05_pop_crust_punk|",
         ["0x0000CE9F"] = "mus_radio_05_pop_heres_a_thought|",
         ["0x0000CE92"] = "mus_radio_04_hiphop_yugen_blakrok|Yugen Blakrok & Gorgon Madonna|Metamorphosis",
