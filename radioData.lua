@@ -12,7 +12,7 @@ radioData = {
         ["radio_station_09_downtempo"] = "88.3 Pacific Dreams",
         ["radio_station_10_latino"] = "106.9 30 Principales",
         ["radio_station_11_metal"] = "96.1 Ritual FM"
-    }
+    },
 
     radioStationSongs = {
         ["radio_station_01_att_rock"] = "0x0000CE51,0x0000CE52,0x0000CE53,0x0000CE55,0x0000CE56,0x0000CE57,0x0000CE58,0x0000CE59,0x0000CE5A,0x0000CE5B,0x0000CE5C,0x0000D06E,0x0000D06F,0x0000D071,0x0000D072",
@@ -26,21 +26,7 @@ radioData = {
         ["radio_station_09_downtempo"] = "0x0000CE40,0x0000CE41,0x0000CE42,0x0000CE43,0x0000CE44,0x0000CE45,0x0000CE46,0x0000CE47,0x0000CE48,0x0000CE49,0x0000CE4A,0x0000CE4B,0x0000CE4C,0x0000CE4D,0x0000CE4E,0x0000CE4F,0x0000CE50",
         ["radio_station_10_latino"] = "0x0000CEB2,0x0000CEB3,0x0000CEB4,0x0000CEB5,0x0000CEB6,0x0000CEB7,0x0000CEB8,0x0000CEB9,0x0000CEBA,0x0000CEBB,0x0000CEBC",
         ["radio_station_11_metal"] = "0x0000CEBD,0x0000CEBE,0x0000CEBF,0x0000CEC0,0x0000CEC1,0x0000CEC2,0x0000CEC3,0x0000CEC4,0x0000CEC5,0x0000CEC6,0x0000CEC7,0x0000CEC8,0x0000CEC9,0x0000CECA"
-    }
-
-    radioStationCounts = {
-        ["radio_station_01_att_rock"] = 15,
-        ["radio_station_02_aggro_ind"] = 14,
-        ["radio_station_03_elec_ind"] = 13,
-        ["radio_station_04_hiphop"] = 21,
-        ["radio_station_05_pop"] = 13,
-        ["radio_station_06_minim_techno"] = 5,
-        ["radio_station_07_aggro_techno"] = 15,
-        ["radio_station_08_jazz"] = 9,
-        ["radio_station_09_downtempo"] = 17,
-        ["radio_station_10_latino"] = 11,
-        ["radio_station_11_metal"] = 14
-    }
+    },
 
     songHashToInfo = {
         ["0x0000CE52"] = "mus_radio_01_att_rock_heaven_ho|Konrad OldMoney feat Frawst & XerzeX|Heave Ho",
