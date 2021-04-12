@@ -28,6 +28,20 @@ radioData = {
         ["radio_station_11_metal"] = "0x0000CEBD,0x0000CEBE,0x0000CEBF,0x0000CEC0,0x0000CEC1,0x0000CEC2,0x0000CEC3,0x0000CEC4,0x0000CEC5,0x0000CEC6,0x0000CEC7,0x0000CEC8,0x0000CEC9,0x0000CECA"
     },
 
+    radioStationIndex = {
+        ["radio_station_01_att_rock"] = 5,
+        ["radio_station_02_aggro_ind"] = 0,
+        ["radio_station_03_elec_ind"] = 1,
+        ["radio_station_04_hiphop"] = 2,
+        ["radio_station_05_pop"] = 6,
+        ["radio_station_06_minim_techno"] = 9,
+        ["radio_station_07_aggro_techno"] = 3,
+        ["radio_station_08_jazz"] = 10,
+        ["radio_station_09_downtempo"] = 4,
+        ["radio_station_10_latino"] = 7,
+        ["radio_station_11_metal"] = 8
+    },
+
     songHashToInfo = {
         ["0x0000CE52"] = "mus_radio_01_att_rock_heaven_ho|Konrad OldMoney feat Frawst & XerzeX|Heave Ho",
         ["0x0000CE51"] = "mus_radio_01_att_rock_suffer_me|The Cold Stares & Brutus Backlash|Suffer Me",

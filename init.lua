@@ -1,6 +1,7 @@
 ImprovedRadio = {
     radioData = require("radioData.lua"),
     ui = require("ui.lua"),
+    updateSeconds = 2,
     player = nil,
     workSpot = nil,
     car = nil,
@@ -9,7 +10,13 @@ ImprovedRadio = {
     isUIVisible = false,
     curStation = nil,
     curSongInfoString = nil,
-    songsToRemove = {}
+    songsToRemove = {},
+    playlistSongs = {},
+    playlistCount = 0,
+    playlistIndex = 1,
+    playlistPlaying = false,
+    playlistShuffle = false,
+    prevSong = nil
 }
 
 function ImprovedRadio.dump(o)
@@ -32,6 +39,16 @@ function ImprovedRadio.hasValue(tab, val)
         end
     end
     return false
+end
+
+function ImprovedRadio.songCodeToInfo(code)
+
+    local songInfoString = radioData.songHashToInfo[code]
+    local songInfo = {}
+    for info in string.gmatch(songInfoString, "[^%|]+") do
+        table.insert(songInfo, info)
+    end
+    return songInfo
 end
 
 function ImprovedRadio.getStation(song)
@@ -74,6 +91,28 @@ function ImprovedRadio.skipSong()
     end
 end
 
+function ImprovedRadio.playlistNextSong()
+
+    local nextIndex = 1
+    if(ImprovedRadio.playlistShuffle) then
+        nextIndex = math.random(1, ImprovedRadio.playlistCount)
+    else
+        nextIndex = ImprovedRadio.playlistIndex
+    end
+    if(nextIndex > ImprovedRadio.playlistCount) then
+        nextIndex = nextIndex - ImprovedRadio.playlistCount
+    end
+
+    local nextSongCode = ImprovedRadio.playlistSongs[nextIndex]
+    local nextStation = ImprovedRadio.getStation(nextSongCode)
+    local nextSongInfo = ImprovedRadio.songCodeToInfo(nextSongCode)
+    print(nextSongInfo[1])
+
+    ImprovedRadio.car:SetRadioReceiverStation(ImprovedRadio.radioData.radioStationIndex[nextStation])
+    ImprovedRadio.audio:RequestSongOnRadioStation(nextStation, nextSongInfo[1])
+    ImprovedRadio.playlistIndex = ImprovedRadio.playlistIndex + 1
+end
+
 function ImprovedRadio.setSongsToRemove(songStates)
     ImprovedRadio.songsToRemove = {}
     local i = 1
@@ -99,22 +138,27 @@ function ImprovedRadio:new()
     registerForEvent("onUpdate", function(deltaTime)
 
         ImprovedRadio.timer = ImprovedRadio.timer + deltaTime
-        if(ImprovedRadio.timer > 2) then
-            ImprovedRadio.timer = ImprovedRadio.timer - 2
+        if(ImprovedRadio.timer > ImprovedRadio.updateSeconds) then
+            ImprovedRadio.timer = ImprovedRadio.timer - ImprovedRadio.updateSeconds
 
             if(ImprovedRadio.player and ImprovedRadio.workSpot and ImprovedRadio.workSpot:IsActorInWorkspot(ImprovedRadio.player)) then
 
-                local car = Game['GetMountedVehicle;GameObject'](ImprovedRadio.player)
-                if (car and car:IsRadioReceiverActive()) then
+                ImprovedRadio.car = Game['GetMountedVehicle;GameObject'](ImprovedRadio.player)
+                if (ImprovedRadio.car and ImprovedRadio.car:IsRadioReceiverActive()) then
+                    
+                    local curSong = tostring(ImprovedRadio.car:GetRadioReceiverTrackName()):sub(20, 29)
+                    ImprovedRadio.curSongInfoString = ImprovedRadio.radioData.songHashToInfo[curSong]
 
-                    local curRadioSong = tostring(car:GetRadioReceiverTrackName()):sub(20, 29)
-                    ImprovedRadio.curSongInfoString = ImprovedRadio.radioData.songHashToInfo[curRadioSong]
-
-                    if(ImprovedRadio.curStation == nil) then
-                        ImprovedRadio.curStation = ImprovedRadio.getStation(curRadioSong)
+                    if(ImprovedRadio.playlistPlaying and ImprovedRadio.prevSong ~= curSong) then
+                        ImprovedRadio.playlistNextSong()
+                        ImprovedRadio.prevSong = curSong
                     end
 
-                    if(ImprovedRadio.hasValue(ImprovedRadio.songsToRemove, curRadioSong)) then
+                    if(ImprovedRadio.curStation == nil) then
+                        ImprovedRadio.curStation = ImprovedRadio.getStation(curSong)
+                    end
+
+                    if(ImprovedRadio.hasValue(ImprovedRadio.songsToRemove, curSong)) then
                         ImprovedRadio.skipSong() 
                     end
                 end

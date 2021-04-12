@@ -1,7 +1,13 @@
+local IO = require("io.lua")
+
 UI = {
     radioData = require("radioData.lua"),
     parent = nil,
-    songsEnabled = {}
+    removerSelectedStation = nil,
+    songsEnabled = {},
+    shufflePlaylist = false,
+    playlistUIStations = {},
+    playlistButtonName = "Play"
 }
 
 function table_invert(t)
@@ -12,6 +18,36 @@ function table_invert(t)
     return s
 end
 
+function getSongCodes(radioName)
+
+    local stationId = table_invert(radioData.radioStationNames)
+    local songList = radioData.radioStationSongs[stationId[radioName]]
+
+    if(songList) then
+        local songCodes = {}
+        for val in string.gmatch(songList, "(%w+),") do
+            table.insert(songCodes, val)
+        end
+        return songCodes
+    end
+    return nil
+end
+
+function songCodeToLabel(code)
+
+    if(code == "Select Track") then
+        return code
+    end
+    
+    local songInfo = UI.parent.songCodeToInfo(code)
+
+    local songLabel = tostring(songInfo[3]) .. " - " .. tostring(songInfo[2])
+    if(songInfo[2] == nil) then
+        songLabel = tostring(songInfo[1])
+    end
+    return songLabel
+end
+
 function UI.init(ImprovedRadio)
 
     UI.parent = ImprovedRadio
@@ -19,9 +55,15 @@ function UI.init(ImprovedRadio)
     ImGui.SetNextWindowPos(100, 500, ImGuiCond.FirstUseEver)
     ImGui.SetNextWindowSize(500, 600, ImGuiCond.Appearing)
 
-    for key, _ in pairs(radioData.songHashToInfo) do
-        UI.songsEnabled[key] = true
+    UI.songsEnabled = IO.readFile("songsEnabled.ini")
+    
+    if(UI.songsEnabled == nil) then
+        UI.songsEnabled = {}
+        for key, _ in pairs(radioData.songHashToInfo) do
+            UI.songsEnabled[key] = true
+        end
     end
+    UI.parent.setSongsToRemove(UI.songsEnabled)
 end
 
 function UI.draw()
@@ -35,7 +77,9 @@ function UI.draw()
             table.insert(songInfo, val)
         end
     end
-    ImGui.Text("Track: " .. tostring(songInfo[3]))
+    local trackName = songInfo[3]
+    if(trackName == nil) then trackName = songInfo[1] end
+    ImGui.Text("Track: " .. tostring(trackName))
     ImGui.Text("Artist: " .. tostring(songInfo[2]))
     ImGui.Text("Station: " .. tostring(UI.radioData.radioStationNames[UI.parent.curStation]))
     ImGui.EndChild()
@@ -50,15 +94,17 @@ function UI.draw()
 
     if(ImGui.CollapsingHeader("Track Remover")) then
 
-        ImGui.BeginChild("trackRemover", 480, 300, true)
+        ImGui.BeginChild("trackRemover", 480, 250, true)
 
-        local dropdownSelected = radioData.radioStationNames[UI.parent.curStation]
+        if(UI.removerSelectedStation == nil) then
+            UI.removerSelectedStation = radioData.radioStationNames[UI.parent.curStation]
+        end
 
-        if ImGui.BeginCombo("Station", tostring(dropdownSelected)) then
+        if ImGui.BeginCombo("Station", UI.removerSelectedStation) then
 
-            for i, option in pairs(radioData.radioStationNames) do
-                if ImGui.Selectable(option, (option == dropdownSelected)) then
-                    dropdownSelected = option
+            for _, option in pairs(radioData.radioStationNames) do
+                if ImGui.Selectable(option, (option == UI.removerSelectedStation)) then
+                    UI.removerSelectedStation = option
                     ImGui.SetItemDefaultFocus()
                 end
             end
@@ -67,42 +113,94 @@ function UI.draw()
         ImGui.Spacing()
         ImGui.Separator()
 
-        local stationId = table_invert(radioData.radioStationNames)
-        local songList = radioData.radioStationSongs[stationId[dropdownSelected]]
+        local songCodes = getSongCodes(UI.removerSelectedStation)
 
-        if(songList) then
+        if(songCodes) then
+            for _, val in ipairs(songCodes) do
 
-            local songCodes = {}
-            for val in string.gmatch(songList, "(%w+),") do
-                table.insert(songCodes, val)
-            end
-
-            for key, val in ipairs(songCodes) do
-
-                local songInfoString = radioData.songHashToInfo[val]
-                local songInfo = {}
-                for info in string.gmatch(songInfoString, "[^%|]+") do
-                    table.insert(songInfo, info)
+                local songState = "(enabled) "
+                if(UI.songsEnabled[val] == false) then
+                    songState = "(disabled) "
                 end
 
-                local songLabel = tostring(songInfo[3]) .. " - " .. tostring(songInfo[2])
-                if(songInfo[2] == nil) then
-                    songLabel = tostring(songInfo[1])
-                end
-
+                local songLabel = songCodeToLabel(val)
                 local prevEnabled = UI.songsEnabled[val]
-                UI.songsEnabled[val] = ImGui.Selectable(songLabel, UI.songsEnabled[val], ImGuiSelectableFlags.AllowDoubleClick)
+                UI.songsEnabled[val] = ImGui.Selectable(songState .. songLabel, UI.songsEnabled[val], ImGuiSelectableFlags.AllowDoubleClick)
 
                 if(UI.songsEnabled[val] ~= prevEnabled) then
-                UI.parent.setSongsToRemove(UI.songsEnabled)
+                    UI.parent.setSongsToRemove(UI.songsEnabled)
+                    IO.writeFile("songsEnabled.ini", UI.songsEnabled)
                 end
             end
         end
+        
         ImGui.EndChild()
     end
     ImGui.Spacing()
-    if(ImGui.CollapsingHeader("Custom Radio Station")) then
 
+    if(ImGui.CollapsingHeader("Custom Radio Playlist")) then
+
+        ImGui.BeginChild("customRadio", 480, 250, true)
+        if(ImGui.Button(UI.playlistButtonName)) then
+
+            if(UI.parent.playlistPlaying) then
+                UI.parent.playlistPlaying = false
+                UI.playlistButtonName = "Play"
+            else
+                UI.parent.prevSong = nil
+                UI.parent.playlistPlaying = true
+                UI.playlistButtonName = "Stop"
+            end
+        end
+        ImGui.SameLine()
+        UI.parent.playlistShuffle = ImGui.Checkbox("Shuffle", UI.shufflePlaylist)
+
+        ImGui.SameLine(200)
+        if(ImGui.Button("Add Track")) then
+            UI.parent.playlistCount = UI.parent.playlistCount + 1
+            UI.playlistUIStations[UI.parent.playlistCount] = "Select Station"
+            UI.parent.playlistSongs[UI.parent.playlistCount] = "Select Track"
+        end
+
+        for i = 1, UI.parent.playlistCount do
+
+            ImGui.PushItemWidth(200)
+            if ImGui.BeginCombo("##CustomStation" .. i, UI.playlistUIStations[i]) then
+
+                for _, option in pairs(radioData.radioStationNames) do
+                    if ImGui.Selectable(option, (option == UI.playlistUIStations[i])) then
+                        UI.playlistUIStations[i] = option
+                        ImGui.SetItemDefaultFocus()
+                    end
+                end
+                ImGui.EndCombo()
+            end
+            ImGui.SameLine(220)
+            if ImGui.BeginCombo("##CustomSong" .. i, songCodeToLabel(UI.parent.playlistSongs[i])) then
+                
+                if(UI.playlistUIStations[i] ~= "Select Station") then
+
+                    local songNames = {}
+                    local songCodes = getSongCodes(UI.playlistUIStations[i])
+                    if(songCodes) then
+                        for _, option in pairs(songCodes) do
+
+                            if ImGui.Selectable(songCodeToLabel(option), (option == UI.parent.playlistSongs[i])) then
+                                UI.parent.playlistSongs[i] = option
+                                ImGui.SetItemDefaultFocus()
+                            end
+                        end
+                    end
+                end
+                ImGui.EndCombo()
+            end
+            ImGui.PopItemWidth()
+            ImGui.SameLine(440)
+            if(ImGui.Button("X")) then
+                UI.parent.playlistCount = UI.parent.playlistCount - 1
+            end
+        end
+        ImGui.EndChild()
     end
 
     ImGui.End()
