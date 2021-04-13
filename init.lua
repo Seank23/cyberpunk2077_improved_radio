@@ -115,6 +115,7 @@ function ImprovedRadio.playlistNextSong()
 
     if(ImprovedRadio.playlistCount == 0) then
         ImprovedRadio.playlistPlaying = false
+        ImprovedRadio.ui.playlistButtonName = "Play"
         return
     end
     local nextIndex = 1
@@ -221,6 +222,52 @@ function ImprovedRadio:new()
     
     registerForEvent("onOverlayClose", function()
         ImprovedRadio.isUIVisible = false
+    end)
+
+    registerHotkey("showUI", "Toggle Improved Radio Window", function()
+        if(ImprovedRadio.isUIVisible) then
+            ImprovedRadio.isUIVisible = false
+        else
+            ImprovedRadio.isUIVisible = true
+        end
+    end)
+
+    registerHotkey("skipSong", "Skip Song", function()
+        if(ImprovedRadio.playlistPlaying) then
+            ImprovedRadio.prevSong = ImprovedRadio.playlistNextSong()
+        else
+            ImprovedRadio.skipSong()
+        end
+    end)
+
+    registerHotkey("playPlaylist", "Play/Stop Playlist", function()
+        if(ImprovedRadio.playlistPlaying) then
+            ImprovedRadio.playlistPlaying = false
+            ImprovedRadio.ui.playlistButtonName = "Play"
+        else
+            ImprovedRadio.playlistPlaying = true
+            ImprovedRadio.ui.playlistButtonName = "Stop"
+        end
+    end)
+
+    registerHotkey("playlistSlot1", "Play Playlist Slot 1", function()
+        ImprovedRadio.ui.switchPlaylistSlot(1)
+    end)
+
+    registerHotkey("playlistSlot2", "Play Playlist Slot 2", function()
+        ImprovedRadio.ui.switchPlaylistSlot(2)
+    end)
+
+    registerHotkey("playlistSlot3", "Play Playlist Slot 3", function()
+        ImprovedRadio.ui.switchPlaylistSlot(3)
+    end)
+
+    registerHotkey("playlistSlot4", "Play Playlist Slot 4", function()
+        ImprovedRadio.ui.switchPlaylistSlot(4)
+    end)
+
+    registerHotkey("playlistSlot5", "Play Playlist Slot 5", function()
+        ImprovedRadio.ui.switchPlaylistSlot(5)
     end)
 end
 

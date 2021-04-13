@@ -49,6 +49,20 @@ function UI.songCodeToLabel(code)
     return songLabel
 end
 
+function UI.switchPlaylistSlot(slotIndex)
+
+    IO.writeFile("slot_" .. UI.curSlot .. ".ini", UI.parent.playlistSongs) -- Save current playlist to slot
+    UI.curSlot = slotIndex
+    UI.parent.playlistCount = 0
+    UI.parent.playlistSongs = IO.readFile("slot_" .. slotIndex .. ".ini") -- Load selected slot
+    for _, val in ipairs(UI.parent.playlistSongs) do
+        UI.parent.loadTrack(val)
+    end
+    if(UI.parent.playlistPlaying) then
+        UI.parent.playlistNextSong()
+    end
+end
+
 function UI.init(ImprovedRadio)
 
     UI.parent = ImprovedRadio
@@ -66,10 +80,9 @@ function UI.init(ImprovedRadio)
     end
     UI.parent.setSongsToRemove(UI.songsEnabled)
 
-    local playlistCount = 0
-    UI.parent.playlistSongs, playlistCount = IO.readFile("slot_" .. UI.curSlot .. ".ini")
-    for i = 1, playlistCount do
-        UI.parent.loadTrack(UI.parent.playlistSongs[i])
+    UI.parent.playlistSongs = IO.readFile("slot_" .. UI.curSlot .. ".ini")
+    for _, val in ipairs(UI.parent.playlistSongs) do
+        UI.parent.loadTrack(val)
     end
 end
 
@@ -169,13 +182,14 @@ function UI.draw()
             end
         end
         ImGui.SameLine()
-        UI.parent.playlistShuffle = ImGui.Checkbox("Shuffle", UI.parent.playlistShuffle)
-        ImGui.SameLine()
-        if(ImGui.Button("Clear")) then
+        if(ImGui.Button("Clear", 150, 20)) then
             UI.parent.playlistSongs = {}
             UI.parent.playlistCount = 0
             UI.parent.playlistPlaying = false
         end
+
+        ImGui.SameLine()
+        UI.parent.playlistShuffle = ImGui.Checkbox("Shuffle", UI.parent.playlistShuffle)
 
         if(ImGui.Button("Add Track", 150, 20)) then
             UI.parent.playlistCount = UI.parent.playlistCount + 1
@@ -186,18 +200,7 @@ function UI.draw()
         for i = 1, 5 do
             ImGui.SameLine()
             if(ImGui.Button("Slot " .. i)) then
-
-                IO.writeFile("slot_" .. UI.curSlot .. ".ini", UI.parent.playlistSongs) -- Save current playlist to slot
-                UI.curSlot = i
-                UI.parent.playlistCount = 0
-                local playlistCount = 0
-                UI.parent.playlistSongs, playlistCount = IO.readFile("slot_" .. i .. ".ini") -- Load selected slot
-                for i = 1, playlistCount do
-                    UI.parent.loadTrack(UI.parent.playlistSongs[i])
-                end
-                if(UI.parent.playlistPlaying) then
-                    UI.parent.playlistNextSong()
-                end
+                UI.SwitchPlaylistSlot(i)
             end
         end
         ImGui.Spacing()
