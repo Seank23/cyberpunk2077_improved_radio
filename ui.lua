@@ -19,7 +19,7 @@ function table_invert(t)
     return s
 end
 
-function getSongCodes(radioName)
+function UI.getSongCodes(radioName)
 
     local stationId = table_invert(radioData.radioStationNames)
     local songList = radioData.radioStationSongs[stationId[radioName]]
@@ -142,7 +142,7 @@ function UI.draw()
         ImGui.Spacing()
         ImGui.Separator()
 
-        local songCodes = getSongCodes(UI.removerSelectedStation)
+        local songCodes = UI.getSongCodes(UI.removerSelectedStation)
 
         if(songCodes) then
             for _, val in ipairs(songCodes) do
@@ -224,7 +224,7 @@ function UI.draw()
                 if(UI.playlistUIStations[i] ~= "Select Station") then
 
                     local songNames = {}
-                    local songCodes = getSongCodes(UI.playlistUIStations[i])
+                    local songCodes = UI.getSongCodes(UI.playlistUIStations[i])
                     if(songCodes) then
                         for _, option in pairs(songCodes) do
 
