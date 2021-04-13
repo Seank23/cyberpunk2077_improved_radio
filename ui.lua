@@ -7,7 +7,8 @@ UI = {
     songsEnabled = {},
     shufflePlaylist = false,
     playlistUIStations = {},
-    playlistButtonName = "Play"
+    playlistButtonName = "Play",
+    curSlot = 1
 }
 
 function table_invert(t)
@@ -33,7 +34,7 @@ function getSongCodes(radioName)
     return nil
 end
 
-function songCodeToLabel(code)
+function UI.songCodeToLabel(code)
 
     if(code == "Select Track") then
         return code
@@ -53,7 +54,7 @@ function UI.init(ImprovedRadio)
     UI.parent = ImprovedRadio
 
     ImGui.SetNextWindowPos(100, 500, ImGuiCond.FirstUseEver)
-    ImGui.SetNextWindowSize(500, 600, ImGuiCond.Appearing)
+    ImGui.SetNextWindowSize(500, 800, ImGuiCond.Appearing)
 
     UI.songsEnabled = IO.readFile("songsEnabled.ini")
     
@@ -64,13 +65,19 @@ function UI.init(ImprovedRadio)
         end
     end
     UI.parent.setSongsToRemove(UI.songsEnabled)
+
+    local playlistCount = 0
+    UI.parent.playlistSongs, playlistCount = IO.readFile("slot_" .. UI.curSlot .. ".ini")
+    for i = 1, playlistCount do
+        UI.parent.loadTrack(UI.parent.playlistSongs[i])
+    end
 end
 
 function UI.draw()
 
     ImGui.Begin("Improved Radio")
 
-    ImGui.BeginChild("trackInfo", 480, 65, true)
+    ImGui.BeginChild("trackInfo", 480, 92, true)
     songInfo = {}
     if(UI.parent.curSongInfoString) then
         for val in string.gmatch(UI.parent.curSongInfoString, "[^%|]+") do
@@ -79,6 +86,11 @@ function UI.draw()
     end
     local trackName = songInfo[3]
     if(trackName == nil) then trackName = songInfo[1] end
+    ImGui.SetWindowFontScale(1.2)
+    ImGui.Text("Playing...")
+    ImGui.SetWindowFontScale(1)
+    ImGui.Spacing()
+    ImGui.Separator()
     ImGui.Text("Track: " .. tostring(trackName))
     ImGui.Text("Artist: " .. tostring(songInfo[2]))
     ImGui.Text("Station: " .. tostring(UI.radioData.radioStationNames[UI.parent.curStation]))
@@ -86,8 +98,12 @@ function UI.draw()
 
     ImGui.Spacing()
 
-    if(ImGui.Button("Skip Track")) then
-        UI.parent.skipSong()
+    if(ImGui.Button("Skip Track", 150, 20)) then
+        if(UI.parent.playlistPlaying) then
+            UI.parent.prevSong = UI.parent.playlistNextSong()
+        else
+            UI.parent.skipSong()
+        end
     end
 
     ImGui.Spacing()
@@ -123,7 +139,7 @@ function UI.draw()
                     songState = "(disabled) "
                 end
 
-                local songLabel = songCodeToLabel(val)
+                local songLabel = UI.songCodeToLabel(val)
                 local prevEnabled = UI.songsEnabled[val]
                 UI.songsEnabled[val] = ImGui.Selectable(songState .. songLabel, UI.songsEnabled[val], ImGuiSelectableFlags.AllowDoubleClick)
 
@@ -141,7 +157,7 @@ function UI.draw()
     if(ImGui.CollapsingHeader("Custom Radio Playlist")) then
 
         ImGui.BeginChild("customRadio", 480, 250, true)
-        if(ImGui.Button(UI.playlistButtonName)) then
+        if(ImGui.Button(UI.playlistButtonName, 150, 20)) then
 
             if(UI.parent.playlistPlaying) then
                 UI.parent.playlistPlaying = false
@@ -153,15 +169,39 @@ function UI.draw()
             end
         end
         ImGui.SameLine()
-        UI.parent.playlistShuffle = ImGui.Checkbox("Shuffle", UI.shufflePlaylist)
+        UI.parent.playlistShuffle = ImGui.Checkbox("Shuffle", UI.parent.playlistShuffle)
+        ImGui.SameLine()
+        if(ImGui.Button("Clear")) then
+            UI.parent.playlistSongs = {}
+            UI.parent.playlistCount = 0
+            UI.parent.playlistPlaying = false
+        end
 
-        ImGui.SameLine(200)
-        if(ImGui.Button("Add Track")) then
+        if(ImGui.Button("Add Track", 150, 20)) then
             UI.parent.playlistCount = UI.parent.playlistCount + 1
             UI.playlistUIStations[UI.parent.playlistCount] = "Select Station"
             UI.parent.playlistSongs[UI.parent.playlistCount] = "Select Track"
         end
 
+        for i = 1, 5 do
+            ImGui.SameLine()
+            if(ImGui.Button("Slot " .. i)) then
+
+                IO.writeFile("slot_" .. UI.curSlot .. ".ini", UI.parent.playlistSongs) -- Save current playlist to slot
+                UI.curSlot = i
+                UI.parent.playlistCount = 0
+                local playlistCount = 0
+                UI.parent.playlistSongs, playlistCount = IO.readFile("slot_" .. i .. ".ini") -- Load selected slot
+                for i = 1, playlistCount do
+                    UI.parent.loadTrack(UI.parent.playlistSongs[i])
+                end
+                if(UI.parent.playlistPlaying) then
+                    UI.parent.playlistNextSong()
+                end
+            end
+        end
+        ImGui.Spacing()
+        ImGui.Separator()
         for i = 1, UI.parent.playlistCount do
 
             ImGui.PushItemWidth(200)
@@ -176,7 +216,7 @@ function UI.draw()
                 ImGui.EndCombo()
             end
             ImGui.SameLine(220)
-            if ImGui.BeginCombo("##CustomSong" .. i, songCodeToLabel(UI.parent.playlistSongs[i])) then
+            if ImGui.BeginCombo("##CustomSong" .. i, UI.songCodeToLabel(UI.parent.playlistSongs[i])) then
                 
                 if(UI.playlistUIStations[i] ~= "Select Station") then
 
@@ -185,7 +225,7 @@ function UI.draw()
                     if(songCodes) then
                         for _, option in pairs(songCodes) do
 
-                            if ImGui.Selectable(songCodeToLabel(option), (option == UI.parent.playlistSongs[i])) then
+                            if ImGui.Selectable(UI.songCodeToLabel(option), (option == UI.parent.playlistSongs[i])) then
                                 UI.parent.playlistSongs[i] = option
                                 ImGui.SetItemDefaultFocus()
                             end
@@ -195,9 +235,9 @@ function UI.draw()
                 ImGui.EndCombo()
             end
             ImGui.PopItemWidth()
-            ImGui.SameLine(440)
-            if(ImGui.Button("X")) then
-                UI.parent.playlistCount = UI.parent.playlistCount - 1
+            ImGui.SameLine(430)
+            if(ImGui.Button("X (" .. i .. ")")) then
+                UI.parent.removePlaylistSong(i)
             end
         end
         ImGui.EndChild()
