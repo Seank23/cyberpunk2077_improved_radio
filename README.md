@@ -12,6 +12,10 @@ Allows full control over the in-game radio. Features include disabling individua
 - Extract the 'improved_radio' folder into the CET mods folder: <your installation path>\Cyberpunk 2077\bin\x64\plugins\cyber_engine_tweaks\mods\
 
 ## How To Use:
+
+
+![ImprovedRadio](https://github.com/Seank23/cyberpunk2077_improved_radio/blob/master/Images/ImprovedRadio.png)
+
 - The Improved Radio UI window can be viewed when the CyberEngineTweaks overlay is opened.
 - The currently playing track information is displayed at the top of the UI window (1 in image).
 
