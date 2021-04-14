@@ -200,7 +200,7 @@ function UI.draw()
         for i = 1, 5 do
             ImGui.SameLine()
             if(ImGui.Button("Slot " .. i)) then
-                UI.SwitchPlaylistSlot(i)
+                UI.switchPlaylistSlot(i)
             end
         end
         ImGui.Spacing()

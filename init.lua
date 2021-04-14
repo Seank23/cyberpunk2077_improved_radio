@@ -200,10 +200,13 @@ function ImprovedRadio:new()
                         ImprovedRadio.curStation = ImprovedRadio.getStation(ImprovedRadio.curSong)
                     end
 
-                    if(ImprovedRadio.playlistPlaying and ImprovedRadio.prevSong ~= ImprovedRadio.curSong) then
-                        ImprovedRadio.prevSong = ImprovedRadio.playlistNextSong()
-                    elseif(ImprovedRadio.hasValue(ImprovedRadio.songsToRemove, ImprovedRadio.curSong)) then
-                        ImprovedRadio.skipSong() 
+                    if(ImprovedRadio.curSong ~= "0x00000000") then -- News   
+
+                        if(ImprovedRadio.playlistPlaying and ImprovedRadio.prevSong ~= ImprovedRadio.curSong) then
+                            ImprovedRadio.prevSong = ImprovedRadio.playlistNextSong()
+                        elseif(ImprovedRadio.hasValue(ImprovedRadio.songsToRemove, ImprovedRadio.curSong)) then
+                            ImprovedRadio.skipSong() 
+                        end
                     end
                 end
             end

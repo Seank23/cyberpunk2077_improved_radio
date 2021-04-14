@@ -43,6 +43,7 @@ radioData = {
     },
 
     songHashToInfo = {
+        ["0x00000000"] = "|Night City|News",
         ["0x0000CE52"] = "mus_radio_01_att_rock_heaven_ho|Konrad OldMoney feat Frawst & XerzeX|Heave Ho",
         ["0x0000CE51"] = "mus_radio_01_att_rock_suffer_me|The Cold Stares & Brutus Backlash|Suffer Me",
         ["0x0000CE62"] = "mus_radio_02_aggro_ind_black_terminal_vox_upgrade|Blue Stahli and Danny Cocke & Black Terminal|Upgrade",
