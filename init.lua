@@ -1,5 +1,6 @@
+local radioData = require("radioData.lua")
+
 ImprovedRadio = {
-    radioData = require("radioData.lua"),
     ui = require("ui.lua"),
     updateSeconds = 2,
     player = nil,
@@ -17,162 +18,12 @@ ImprovedRadio = {
     playlistPlaying = false,
     playlistShuffle = false,
     curSong = nil,
-    prevSong = nil
+    prevSong = nil,
 }
-
-function dump(o)
-    if type(o) == 'table' then
-       local s = '{ '
-       for k,v in pairs(o) do
-          if type(k) ~= 'number' then k = '"'..k..'"' end
-          s = s .. '['..k..'] = ' .. dump(v) .. ','
-       end
-       return s .. '} '
-    else
-       return tostring(o)
-    end
- end
-
-function ImprovedRadio.hasValue(tab, val)
-    for index, value in ipairs(tab) do
-        if value == val then
-            return true
-        end
-    end
-    return false
-end
-
-function ImprovedRadio.songCodeToInfo(code)
-
-    local songInfoString = radioData.songHashToInfo[code]
-    local songInfo = {}
-    for info in string.gmatch(songInfoString, "[^%|]+") do
-        table.insert(songInfo, info)
-    end
-    return songInfo
-end
-
-function ImprovedRadio.loadTrack(songCode)
-
-    UI.parent.playlistCount = UI.parent.playlistCount + 1
-
-    if(songCode == "Select") then
-        UI.playlistUIStations[UI.parent.playlistCount] = "Select Station"
-        ImprovedRadio.playlistSongs[UI.parent.playlistCount] = "Select Track"
-    else
-        local stationName = ImprovedRadio.radioData.radioStationNames[ImprovedRadio.getStation(songCode)]
-        UI.playlistUIStations[UI.parent.playlistCount] = stationName
-    end
-end
-
-function ImprovedRadio.removePlaylistSong(index)
-
-    table.remove(ImprovedRadio.playlistSongs, index)
-    ImprovedRadio.playlistCount = ImprovedRadio.playlistCount - 1
-end
-
-function ImprovedRadio.getStation(song)
-
-    for key, songList in pairs(ImprovedRadio.radioData.radioStationSongs) do
-        if(songList:find(song)) then
-            return key
-        end
-    end
-    return nil
-end
-
-function ImprovedRadio.skipSong()
-
-    if(ImprovedRadio.curStation) then
-
-        local stationSongList = ImprovedRadio.radioData.radioStationSongs[ImprovedRadio.curStation]
-        local songs = {}
-        for val in string.gmatch(stationSongList, "(%w+),") do
-            table.insert(songs, val)
-        end
-
-        validSongs = {}
-        local count = 1
-        for k, v in ipairs(songs) do
-            if(ImprovedRadio.hasValue(ImprovedRadio.songsToRemove, v) == false) then
-                validSongs[count] = v
-                count = count + 1
-            end
-        end
-
-        nextSongIndex = math.random(1, count - 1)
-        nextSongInfoString = ImprovedRadio.radioData.songHashToInfo[validSongs[nextSongIndex]]
-        nextSongInfo = {}
-        for val in string.gmatch(nextSongInfoString, "[^%|]+") do
-            table.insert(nextSongInfo, val)
-        end
-
-        ImprovedRadio.audio:RequestSongOnRadioStation(ImprovedRadio.curStation, nextSongInfo[1])
-    end
-end
-
-function ImprovedRadio.playlistNextSong()
-
-    if(ImprovedRadio.playlistCount == 0) then
-        ImprovedRadio.playlistPlaying = false
-        ImprovedRadio.ui.playlistButtonName = "Play"
-        return
-    end
-    local nextIndex = 1
-    local nextSongCode = "Select Track"
-
-    if(ImprovedRadio.hasValue(ImprovedRadio.playlistSongs, ImprovedRadio.curSong) == false) then
-        ImprovedRadio.playlistIndex = ImprovedRadio.playlistIndex - 1
-    end
-    
-    if(ImprovedRadio.playlistShuffle) then
-        nextIndex = math.random(1, ImprovedRadio.playlistCount)
-        if(nextIndex == ImprovedRadio.playlistIndex) then
-            nextIndex = math.random(1, ImprovedRadio.playlistCount)
-        end
-        ImprovedRadio.playlistIndex = nextIndex
-    else
-        nextIndex = ImprovedRadio.playlistIndex
-        if(nextIndex > ImprovedRadio.playlistCount) then
-            nextIndex = nextIndex - ImprovedRadio.playlistCount
-        end
-    end
-
-    local nextSongCode = ImprovedRadio.playlistSongs[nextIndex]
-
-    if(nextSongCode == nil or nextSongCode == "Select Track") then
-        for i = 1, ImprovedRadio.playlistCount do
-            nextSongCode = ImprovedRadio.playlistSongs[i]
-            if(nextSongCode ~= nil and nextSongCode ~= "Select Track") then
-                ImprovedRadio.playlistIndex = i
-                break
-            end
-        end
-    end
-
-    local nextStation = ImprovedRadio.getStation(nextSongCode)
-    local nextSongInfo = ImprovedRadio.songCodeToInfo(nextSongCode)
-
-    ImprovedRadio.car:SetRadioReceiverStation(ImprovedRadio.radioData.radioStationIndex[nextStation])
-    ImprovedRadio.audio:RequestSongOnRadioStation(nextStation, nextSongInfo[1])
-    ImprovedRadio.curStation = nextStation
-    ImprovedRadio.playlistIndex = ImprovedRadio.playlistIndex + 1
-    return nextSongCode
-end
-
-function ImprovedRadio.setSongsToRemove(songStates)
-    ImprovedRadio.songsToRemove = {}
-    local i = 1
-    for key, val in pairs(songStates) do
-        if(val == false) then
-            ImprovedRadio.songsToRemove[i] = key
-            i = i + 1
-        end
-    end
-end
 
 function ImprovedRadio:new()
 
+    -- Init function
     registerForEvent("onInit", function() 
 
         ImprovedRadio.player = Game.GetPlayer() 
@@ -182,10 +33,10 @@ function ImprovedRadio:new()
         timer = 0
     end)
 
+    -- Update function
     registerForEvent("onUpdate", function(deltaTime)
 
-        ImprovedRadio.timer = ImprovedRadio.timer + deltaTime
-        if(ImprovedRadio.timer > ImprovedRadio.updateSeconds) then
+        if(ImprovedRadio.timer > ImprovedRadio.updateSeconds or ImprovedRadio.timer == 0) then
             ImprovedRadio.timer = ImprovedRadio.timer - ImprovedRadio.updateSeconds
 
             if(ImprovedRadio.player and ImprovedRadio.workSpot and ImprovedRadio.workSpot:IsActorInWorkspot(ImprovedRadio.player)) then
@@ -194,25 +45,28 @@ function ImprovedRadio:new()
                 if (ImprovedRadio.car and ImprovedRadio.car:IsRadioReceiverActive()) then
                     
                     ImprovedRadio.curSong = tostring(ImprovedRadio.car:GetRadioReceiverTrackName()):sub(20, 29)
-                    ImprovedRadio.curSongInfoString = ImprovedRadio.radioData.songHashToInfo[ImprovedRadio.curSong]
+                    ImprovedRadio.curSongInfoString = radioData.songHashToInfo[ImprovedRadio.curSong]
 
                     if(ImprovedRadio.curStation == nil) then
-                        ImprovedRadio.curStation = ImprovedRadio.getStation(ImprovedRadio.curSong)
+                        ImprovedRadio.curStation = getStation(ImprovedRadio.curSong)
                     end
 
                     if(ImprovedRadio.curSong ~= "0x00000000") then -- News   
 
                         if(ImprovedRadio.playlistPlaying and ImprovedRadio.prevSong ~= ImprovedRadio.curSong) then
                             ImprovedRadio.prevSong = ImprovedRadio.playlistNextSong()
-                        elseif(ImprovedRadio.hasValue(ImprovedRadio.songsToRemove, ImprovedRadio.curSong)) then
+                        elseif(hasValue(ImprovedRadio.songsToRemove, ImprovedRadio.curSong)) then
                             ImprovedRadio.skipSong() 
                         end
                     end
                 end
             end
         end
+
+        ImprovedRadio.timer = ImprovedRadio.timer + deltaTime
     end)
 
+    -- UI event functions
     registerForEvent("onDraw", function()
         if ImprovedRadio.isUIVisible then	
             ImprovedRadio.ui.draw()
@@ -227,6 +81,7 @@ function ImprovedRadio:new()
         ImprovedRadio.isUIVisible = false
     end)
 
+    -- Hotkey functions
     registerHotkey("showUI", "Toggle Improved Radio Window", function()
         if(ImprovedRadio.isUIVisible) then
             ImprovedRadio.isUIVisible = false
@@ -245,11 +100,9 @@ function ImprovedRadio:new()
 
     registerHotkey("playPlaylist", "Play/Stop Playlist", function()
         if(ImprovedRadio.playlistPlaying) then
-            ImprovedRadio.playlistPlaying = false
-            ImprovedRadio.ui.playlistButtonName = "Play"
+            ImprovedRadio.stopPlaylist()
         else
-            ImprovedRadio.playlistPlaying = true
-            ImprovedRadio.ui.playlistButtonName = "Stop"
+            ImprovedRadio.playPlaylist()
         end
     end)
 
@@ -273,5 +126,199 @@ function ImprovedRadio:new()
         ImprovedRadio.ui.switchPlaylistSlot(5)
     end)
 end
+
+
+-- Track Remover/Skip Track functions
+
+function ImprovedRadio.setSongsToRemove(songStates)
+
+    ImprovedRadio.songsToRemove = {}
+    for key, val in pairs(songStates) do
+        if(val == false) then
+            table.insert(ImprovedRadio.songsToRemove, key)
+        end
+    end
+end
+
+function ImprovedRadio.skipSong()
+
+    if(ImprovedRadio.curStation) then
+
+        local songs = getStationSongs(ImprovedRadio.curStation)
+
+        validSongs = {}
+        local count = 1
+        for k, v in ipairs(songs) do
+            if(hasValue(ImprovedRadio.songsToRemove, v) == false) then
+                validSongs[count] = v
+                count = count + 1
+            end
+        end
+
+        local nextSongIndex = math.random(1, count - 1) -- Chooses random entry from valid songs
+        local nextSongInfo = songCodeToInfo(validSongs[nextSongIndex])
+
+        ImprovedRadio.audio:RequestSongOnRadioStation(ImprovedRadio.curStation, nextSongInfo[1])
+    end
+end
+
+-- Custom Playlist functions
+
+function ImprovedRadio.loadPlaylistTrack(songCode)
+
+    UI.parent.playlistCount = UI.parent.playlistCount + 1
+
+    if(songCode == "Select") then
+        UI.playlistUIStations[UI.parent.playlistCount] = "Select Station"
+        ImprovedRadio.playlistSongs[UI.parent.playlistCount] = "Select Track"
+    else
+        local stationName = radioData.radioStationNames[getStation(songCode)]
+        UI.playlistUIStations[UI.parent.playlistCount] = stationName
+    end
+end
+
+function ImprovedRadio.removePlaylistSong(index)
+
+    table.remove(ImprovedRadio.playlistSongs, index)
+    ImprovedRadio.playlistCount = ImprovedRadio.playlistCount - 1
+end
+
+function ImprovedRadio.playPlaylist()
+
+    ImprovedRadio.prevSong = nil
+    ImprovedRadio.playlistPlaying = true
+    ImprovedRadio.ui.playlistButtonName = "Stop"
+end
+
+function ImprovedRadio.stopPlaylist()
+
+    ImprovedRadio.playlistPlaying = false
+    ImprovedRadio.ui.playlistButtonName = "Play"
+end
+
+function ImprovedRadio.clearPlaylist()
+
+    ImprovedRadio.stopPlaylist()
+    ImprovedRadio.playlistSongs = {}
+    ImprovedRadio.playlistCount = 0
+end
+
+function ImprovedRadio.playlistNextSong()
+
+    if(ImprovedRadio.playlistCount == 0) then -- Playlist empty, stop playlist
+        ImprovedRadio.stopPlaylist()
+        return
+    end
+
+    local nextIndex = 1
+    local nextSongCode = "Select Track"
+
+    if(hasValue(ImprovedRadio.playlistSongs, ImprovedRadio.curSong) == false) then -- Requested song it not playing, try again
+        ImprovedRadio.playlistIndex = ImprovedRadio.playlistIndex - 1
+    end
+    
+    if(ImprovedRadio.playlistShuffle) then -- Play randomly
+        nextIndex = ImprovedRadio.playlistIndex
+        while nextIndex == ImprovedRadio.playlistIndex do
+            nextIndex = math.random(1, ImprovedRadio.playlistCount)
+        end
+    else                                        --  Play in order
+        nextIndex = ImprovedRadio.playlistIndex
+        if(nextIndex > ImprovedRadio.playlistCount) then
+            nextIndex = nextIndex - ImprovedRadio.playlistCount
+        end
+        ImprovedRadio.playlistIndex = nextIndex + 1
+    end
+
+    local nextSongCode = ImprovedRadio.playlistSongs[nextIndex]
+
+    if(nextSongCode == nil or nextSongCode == "Select Track") then -- Song is not valid
+
+        for i = 1, ImprovedRadio.playlistCount do -- Iterate through playlist to find first valid song
+            nextSongCode = ImprovedRadio.playlistSongs[i]
+            if(nextSongCode ~= nil and nextSongCode ~= "Select Track") then
+                ImprovedRadio.playlistIndex = i
+                break
+            end
+        end
+    end
+
+    local nextStation = getStation(nextSongCode)
+    local nextSongInfo = songCodeToInfo(nextSongCode)
+
+    ImprovedRadio.car:SetRadioReceiverStation(radioData.radioStationIndex[nextStation])
+    ImprovedRadio.audio:RequestSongOnRadioStation(nextStation, nextSongInfo[1])
+    ImprovedRadio.curStation = nextStation
+    return nextSongCode
+end
+
+-- Util functions
+
+function getStation(song)
+
+    for key, songList in pairs(radioData.radioStationSongs) do
+        if(songList:find(song)) then
+            return key
+        end
+    end
+    return nil
+end
+
+function getStationSongs(stationID)
+
+    local songList = radioData.radioStationSongs[stationID]
+
+    if(songList) then
+        local songCodes = {}
+        for val in string.gmatch(songList, "(%w+),") do
+            table.insert(songCodes, val)
+        end
+        return songCodes
+    end
+    return nil
+end
+
+function songCodeToInfo(code)
+
+    local songInfoString = radioData.songHashToInfo[code]
+    local songInfo = {}
+    for info in string.gmatch(songInfoString, "[^%|]+") do
+        table.insert(songInfo, info)
+    end
+    return songInfo
+end
+
+function hasValue(tab, val)
+
+    for index, value in ipairs(tab) do
+        if value == val then
+            return true
+        end
+    end
+    return false
+end
+
+function table_invert(t)
+
+    local s={}
+    for k,v in pairs(t) do
+      s[v]=k
+    end
+    return s
+end
+
+function dump(o)
+
+    if type(o) == 'table' then
+       local s = '{ '
+       for k,v in pairs(o) do
+          if type(k) ~= 'number' then k = '"'..k..'"' end
+          s = s .. '['..k..'] = ' .. dump(v) .. ','
+       end
+       return s .. '} '
+    else
+       return tostring(o)
+    end
+ end
 
 return ImprovedRadio:new()
