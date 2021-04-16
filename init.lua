@@ -1,8 +1,9 @@
-local radioData = require("radioData.lua")
+local radioData = require("modules/radioData.lua")
+local IO = require("modules/io.lua")
 
 ImprovedRadio = {
-    ui = require("ui.lua"),
-    updateSeconds = 2,
+    ui = require("modules/ui.lua"),
+    updateSeconds = 1,
     player = nil,
     workSpot = nil,
     car = nil,
@@ -19,6 +20,11 @@ ImprovedRadio = {
     playlistShuffle = false,
     curSong = nil,
     prevSong = nil,
+
+    radioDataStationsBak = nil,
+    radioDataTracksBak = nil,
+    replacementStations = {},
+    replacementTracks = {} 
 }
 
 function ImprovedRadio:new()
@@ -29,14 +35,18 @@ function ImprovedRadio:new()
         ImprovedRadio.player = Game.GetPlayer() 
         ImprovedRadio.workSpot = Game.GetWorkspotSystem()
         ImprovedRadio.audio = Game.GetAudioSystem()
+        ImprovedRadio.loadReplacements()
         ImprovedRadio.ui.init(ImprovedRadio)
         timer = 0
     end)
 
     -- Update function
     registerForEvent("onUpdate", function(deltaTime)
-
+        
         if(ImprovedRadio.timer > ImprovedRadio.updateSeconds or ImprovedRadio.timer == 0) then
+            if(ImprovedRadio.timer == 0) then
+                ImprovedRadio.timer = 2
+            end
             ImprovedRadio.timer = ImprovedRadio.timer - ImprovedRadio.updateSeconds
 
             if(ImprovedRadio.player and ImprovedRadio.workSpot and ImprovedRadio.workSpot:IsActorInWorkspot(ImprovedRadio.player)) then
@@ -127,6 +137,57 @@ function ImprovedRadio:new()
     end)
 end
 
+function ImprovedRadio.loadReplacements()
+
+    ImprovedRadio.radioDataStationsBak = table.shallow_copy(radioData.radioStationNames)
+    ImprovedRadio.radioDataTracksBak = table.shallow_copy(radioData.songHashToInfo)
+
+    local replacementTable = IO.readReplacements()
+    for _, replacement in ipairs(replacementTable) do
+
+        local name = replacement["name"]
+        local stations = {}
+        local tracks = {}
+
+        for key, val in pairs(replacement) do
+            if(string.find(key, "radio_station")) then
+                stations[key] = val
+            elseif(string.find(key, "0x")) then
+                tracks[key] = val
+            end
+        end
+        ImprovedRadio.replacementStations[name] = stations
+        ImprovedRadio.replacementTracks[name] = tracks
+    end
+end
+
+function ImprovedRadio.enableReplacement(name)
+
+    for key, val in pairs(ImprovedRadio.replacementStations[name]) do
+        radioData.radioStationNames[key] = val
+    end
+
+    for key, val in pairs(ImprovedRadio.replacementTracks[name]) do
+        radioData.songHashToInfo[key] = val
+    end
+end
+
+function ImprovedRadio.disableReplacement(name)
+
+    for key, val in pairs(ImprovedRadio.radioDataStationsBak) do
+        radioData.radioStationNames[key] = val
+    end
+
+    for key, val in pairs(ImprovedRadio.radioDataTracksBak) do
+        radioData.songHashToInfo[key] = val
+    end
+
+    for key, val in pairs(ImprovedRadio.ui.replacementsSelected) do
+        if(val) then
+            ImprovedRadio.enableReplacement(key)
+        end
+    end
+end
 
 -- Track Remover/Skip Track functions
 
@@ -160,6 +221,13 @@ function ImprovedRadio.skipSong()
 
         ImprovedRadio.audio:RequestSongOnRadioStation(ImprovedRadio.curStation, nextSongInfo[1])
     end
+end
+
+function ImprovedRadio.tuneStation(station)
+
+    local stationIndex = radioData.radioStationIndex[station]
+    ImprovedRadio.car:SetRadioReceiverStation(stationIndex)
+    ImprovedRadio.curStation = station
 end
 
 -- Custom Playlist functions
@@ -305,6 +373,14 @@ function table_invert(t)
       s[v]=k
     end
     return s
+end
+
+function table.shallow_copy(t)
+    local t2 = {}
+    for k,v in pairs(t) do
+      t2[k] = v
+    end
+    return t2
 end
 
 function dump(o)

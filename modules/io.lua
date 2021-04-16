@@ -21,7 +21,7 @@ function IO.readFile(filepath)
         local data = {}
         local count = 0
         for line in io.lines(filepath) do
-            for key, val in string.gmatch(line, "(%w+)=(%w+)") do
+            for key, val in string.gmatch(line, "(.*)=(.*)") do
 
                 if(tonumber(key) ~= nil and string.match(key, "0x") == nil) then
                     if(val == "true" or val == "false") then
@@ -44,6 +44,24 @@ function IO.readFile(filepath)
     else
         print("error:", err)
     end
+end
+
+function IO.readReplacements()
+
+    local file = io.open("replacements/replacements.ini", "rb")
+    if(file == nil) then
+        return nil
+    end
+    local replacementFiles = {}
+    for line in io.lines("replacements/replacements.ini") do
+        table.insert(replacementFiles, line)
+    end
+    local replacementTable = {}
+    for _, val in ipairs(replacementFiles) do
+        local curFile = IO.readFile("replacements/" .. val)
+        table.insert(replacementTable, curFile)
+    end
+    return replacementTable
 end
 
 function tobool(v)

@@ -1,6 +1,3 @@
-local radioData = require("radioData.lua")
-local IO = require("io.lua")
-
 UI = {
     parent = nil,
     stationNameToId = nil,
@@ -9,7 +6,8 @@ UI = {
     shufflePlaylist = false,
     playlistUIStations = {},
     playlistButtonName = "Play",
-    curSlot = 1
+    curSlot = 1,
+    replacementsSelected = {}
 }
 
 function UI.songCodeToLabel(code)
@@ -28,10 +26,10 @@ end
 
 function UI.switchPlaylistSlot(slotIndex)
 
-    IO.writeFile("slot_" .. UI.curSlot .. ".ini", UI.parent.playlistSongs) -- Save current playlist to slot
+    IO.writeFile("user/slot_" .. UI.curSlot .. ".ini", UI.parent.playlistSongs) -- Save current playlist to slot
     UI.curSlot = slotIndex
     UI.parent.playlistCount = 0
-    UI.parent.playlistSongs = IO.readFile("slot_" .. slotIndex .. ".ini") -- Load playlist in selected slot
+    UI.parent.playlistSongs = IO.readFile("user/slot_" .. slotIndex .. ".ini") -- Load playlist in selected slot
     for _, val in ipairs(UI.parent.playlistSongs) do
         UI.parent.loadPlaylistTrack(val)
     end
@@ -46,9 +44,9 @@ function UI.init(ImprovedRadio)
     UI.stationNameToId = table_invert(radioData.radioStationNames)
 
     ImGui.SetNextWindowPos(100, 500, ImGuiCond.FirstUseEver)
-    ImGui.SetNextWindowSize(500, 800, ImGuiCond.Appearing)
+    ImGui.SetNextWindowSize(500, 820, ImGuiCond.Appearing)
 
-    UI.songsEnabled = IO.readFile("songsEnabled.ini") -- Load enabled songs data
+    UI.songsEnabled = IO.readFile("user/songsEnabled.ini") -- Load enabled songs data
     
     if(UI.songsEnabled == nil) then -- Could not load songsEnabled.ini, creating songsEnabled table
         UI.songsEnabled = {}
@@ -58,9 +56,13 @@ function UI.init(ImprovedRadio)
     end
     UI.parent.setSongsToRemove(UI.songsEnabled)
 
-    UI.parent.playlistSongs = IO.readFile("slot_" .. UI.curSlot .. ".ini") -- Load playlist in initial slot
+    UI.parent.playlistSongs = IO.readFile("user/slot_" .. UI.curSlot .. ".ini") -- Load playlist in initial slot
     for _, val in ipairs(UI.parent.playlistSongs) do
         UI.parent.loadPlaylistTrack(val)
+    end
+
+    for key, _ in pairs(UI.parent.replacementTracks) do
+        UI.replacementsSelected[key] = false
     end
 end
 
@@ -68,6 +70,26 @@ function UI.draw()
 
     -- Main Window
     ImGui.Begin("Improved Radio")
+
+    ImGui.PushItemWidth(480)
+    if ImGui.BeginCombo("##Replacements", "Replacements") then
+
+        for key, _ in pairs(UI.parent.replacementTracks) do
+            local prevVal = UI.replacementsSelected[key]
+            UI.replacementsSelected[key] = ImGui.Checkbox(key, UI.replacementsSelected[key])
+            if(UI.replacementsSelected[key] ~= prevVal) then
+                if(UI.replacementsSelected[key]) then
+                    UI.parent.enableReplacement(key)
+                else
+                    UI.parent.disableReplacement(key) 
+                end
+                UI.stationNameToId = table_invert(radioData.radioStationNames)
+                UI.removerSelectedStation = radioData.radioStationNames[UI.parent.curStation]
+            end
+        end
+        ImGui.EndCombo()
+    end
+    ImGui.PopItemWidth()
 
     -- Current Track Info Panel
     ImGui.BeginChild("trackInfo", 480, 92, true)
@@ -104,11 +126,15 @@ function UI.draw()
         ImGui.BeginChild("trackRemover", 480, 250, true)
 
         if(UI.removerSelectedStation == nil) then
-            UI.removerSelectedStation = radioData.radioStationNames[UI.parent.curStation]
+            if(UI.parent.curStation) then
+                UI.removerSelectedStation = radioData.radioStationNames[UI.parent.curStation]
+            else
+                UI.removerSelectedStation = radioData.radioStationNames["radio_station_01_att_rock"]
+            end
         end
 
         -- Station Dropdown
-        if ImGui.BeginCombo("Station", UI.removerSelectedStation) then
+        if ImGui.BeginCombo("##Station", UI.removerSelectedStation) then
 
             for _, option in pairs(radioData.radioStationNames) do
                 if ImGui.Selectable(option, (option == UI.removerSelectedStation)) then
@@ -117,6 +143,12 @@ function UI.draw()
                 end
             end
             ImGui.EndCombo()
+        end
+
+        ImGui.SameLine()
+
+        if(ImGui.Button("Tune Station", 132, 20)) then
+            UI.parent.tuneStation(UI.stationNameToId[UI.removerSelectedStation])
         end
 
         ImGui.Spacing()
@@ -139,7 +171,7 @@ function UI.draw()
 
                 if(UI.songsEnabled[val] ~= prevEnabled) then
                     UI.parent.setSongsToRemove(UI.songsEnabled)
-                    IO.writeFile("songsEnabled.ini", UI.songsEnabled)
+                    IO.writeFile("user/songsEnabled.ini", UI.songsEnabled)
                 end
             end
         end
@@ -224,7 +256,7 @@ function UI.draw()
                             if ImGui.Selectable(UI.songCodeToLabel(option), (option == UI.parent.playlistSongs[i])) then
                                 UI.parent.playlistSongs[i] = option
                                 ImGui.SetItemDefaultFocus()
-                                IO.writeFile("slot_" .. UI.curSlot .. ".ini", UI.parent.playlistSongs) -- Save current playlist to slot
+                                IO.writeFile("user/slot_" .. UI.curSlot .. ".ini", UI.parent.playlistSongs) -- Save current playlist to slot
                             end
                         end
                     end

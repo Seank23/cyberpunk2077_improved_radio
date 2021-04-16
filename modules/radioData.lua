@@ -123,7 +123,7 @@ radioData = {
         ["0x0000CEA9"] = "mus_radio_08_aggro_techno_fake_spook|",
         ["0x0000CEAA"] = "mus_radio_08_aggro_techno_move_dat|",
         ["0x0000CEB1"] = "mus_radio_08_aggro_techno_cyberpunk02|Poloz & Tinnitus|On My Way To Hell",
-        ["0x0000CE4E"] = "mus_radio_09_downtempo_cdprojekt2_uferlos",
+        ["0x0000CE4E"] = "mus_radio_09_downtempo_cdprojekt2_uferlos|",
         ["0x0000CE45"] = "mus_radio_09_downtempo_chodze|",
         ["0x0000CE46"] = "mus_radio_09_downtempo_cyberpunk05|Lil Jammy|Joytoy Fire",
         ["0x0000CE47"] = "mus_radio_09_downtempo_cyberpunk06|",
@@ -196,7 +196,31 @@ radioData = {
         ["0x0000D06E"] = "mus_radio_01_attrock_summer_of_2069|Blood And Ice (Metz)|Summer of 2069",
         ["0x0000D072"] = "mus_radio_01_attrock_so_it_goes|Fingers And The Outlaws (Man Man)|So It Goes",
         ["0x0000D071"] = "mus_radio_01_attrock_to_the_fullest|Artifical Kids (The Unfit)|To The Fullest"
-    }
+    },
+
+    tracksSynthwaveMod = {
+        ["0x0000CE43"] = "mus_radio_09_downtempo_antagonistic|Lorn|Acid Rain",
+        ["0x0000CE40"] = "mus_radio_09_downtempo_isometric_air|Timecop1983|Nightfall",
+        ["0x0000CE42"] = "mus_radio_09_downtempo_practical_heart|M83|Midnight City",
+        ["0x0000CE41"] = "mus_radio_09_downtempo_real_window|Ghost Loft|Be Easy",
+        ["0x0000CE44"] = "mus_radio_09_downtempo_simple_pleasures|HOME|Hold",
+        ["0x0000CE4E"] = "mus_radio_09_downtempo_cdprojekt2_uferlos|Timecop1983|Cruise",
+        ["0x0000CE45"] = "mus_radio_09_downtempo_chodze|Timecop1983|On the Run",
+        ["0x0000CE46"] = "mus_radio_09_downtempo_cyberpunk05|INZO|Overthinker",
+        ["0x0000CE47"] = "mus_radio_09_downtempo_cyberpunk06|Scandroid|Thriller (Fury Weekend Remix)",
+        ["0x0000CE48"] = "mus_radio_09_downtempo_cyberpunk08|The Weeknd|Blinding Lights",
+        ["0x0000CE4A"] = "mus_radio_09_downtempo_dub_dub_mix_ambient|Key Puncher|Voyager",
+        ["0x0000CE4F"] = "mus_radio_09_downtempo_demo4|C418|Aria Math (Synthwave) [Remastered]",
+        ["0x0000CE50"] = "mus_radio_09_downtempo_demo7|Ephixa & Laura Brehm|Losing You",
+        ["0x0000CE4D"] = "mus_radio_09_downtempo_ashes_and_diamonds|Mr.Kitty|After Dark",
+        ["0x0000CE49"] = "mus_radio_09_downtempo_le_stessa_causa|The Pixies|Where Is My Mind (Retrowave Synthwave cover by The Motion)",
+        ["0x0000CE4B"] = "mus_radio_09_downtempo_miami_suicide|Rihanna|Umbrella (Skeler Remix) (Ember Island Cover)",
+        ["0x0000CE4C"] = "mus_radio_09_downtempo_slippery_stabs|Absolute Valentine|In The 42nd Street",
+    },
+
+    stationsSynthwaveMod = {
+        ["radio_station_09_downtempo"] = "88.3 Synthwave Radio",
+    },
 }
 
 return radioData
