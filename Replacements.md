@@ -13,7 +13,7 @@ This guide details how to add the metadata for your replacement mod into Improve
 
 The format of file this is shown in the following image:
 
-![ReplacementFile](https://github.com/Seank23/cyberpunk2077_improved_radio/blob/master/Images/ReplacementFile.png)
+![ReplacementFile](https://github.com/Seank23/cyberpunk2077_improved_radio/blob/master/Images/ReplacementFile.PNG)
 
 - Each entry in the file must be a key-value pair separated by an equals symbol ('=').
 - The key for each radio station entry must be the in-game identifier string for that station. These can be obtained from the 'radioStationNames' table in the [radioData.lua](https://github.com/Seank23/cyberpunk2077_improved_radio/blob/master/modules/radioData.lua) file.
@@ -21,4 +21,4 @@ The format of file this is shown in the following image:
 - The value of each track entry consists of its track identifier string, the artist name and the track name. Each of these should be listed in a single line and separated by a '|' character.
 - Finally, the name of the text file storing your replacement metadata must be specified on a new line in the replacements.ini file (shown below). This tells Improved Radio where to look for the new metadata.
 
-![ReplacementConfig](https://github.com/Seank23/cyberpunk2077_improved_radio/blob/master/Images/ReplacementConfig.png)
+![ReplacementConfig](https://github.com/Seank23/cyberpunk2077_improved_radio/blob/master/Images/ReplacementConfig.PNG)
