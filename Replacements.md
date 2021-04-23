@@ -11,7 +11,7 @@ This guide details how to add the metadata for your replacement mod into Improve
   - A list of replacement names for the radio stations (optional).
   - A list of replacement track metadata.
 
-The format of file this is shown in the following image:
+The format of this file is shown in the following image:
 
 ![ReplacementFile](https://github.com/Seank23/cyberpunk2077_improved_radio/blob/master/Images/ReplacementFile.PNG)
 
