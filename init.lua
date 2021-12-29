@@ -1,11 +1,9 @@
-local radioData = require("modules/radioData.lua")
-local IO = require("modules/io.lua")
-
 ImprovedRadio = {
+    radioData = require("modules/radioData.lua"),
+    IO = require("modules/io.lua"),
     ui = require("modules/ui.lua"),
     updateSeconds = 1,
     player = nil,
-    workSpot = nil,
     car = nil,
     audio = nil,
     timer = 0,
@@ -20,6 +18,7 @@ ImprovedRadio = {
     playlistShuffle = false,
     curSong = nil,
     prevSong = nil,
+    active = false,
 
     radioDataStationsBak = nil,
     radioDataTracksBak = nil,
@@ -33,7 +32,6 @@ function ImprovedRadio:new()
     registerForEvent("onInit", function() 
 
         ImprovedRadio.player = Game.GetPlayer() 
-        ImprovedRadio.workSpot = Game.GetWorkspotSystem()
         ImprovedRadio.audio = Game.GetAudioSystem()
         ImprovedRadio.loadReplacements()
         ImprovedRadio.ui.init(ImprovedRadio)
@@ -49,11 +47,12 @@ function ImprovedRadio:new()
             end
             ImprovedRadio.timer = ImprovedRadio.timer - ImprovedRadio.updateSeconds
 
-            if(ImprovedRadio.player and ImprovedRadio.workSpot and ImprovedRadio.workSpot:IsActorInWorkspot(ImprovedRadio.player)) then
+            if Game.GetMountedVehicle(ImprovedRadio.player) ~= nil then
 
-                ImprovedRadio.car = Game['GetMountedVehicle;GameObject'](ImprovedRadio.player)
-                if (ImprovedRadio.car and ImprovedRadio.car:IsRadioReceiverActive()) then
-                    
+                ImprovedRadio.car = Game.GetMountedVehicle(Game.GetPlayer())
+                if (ImprovedRadio.car:IsRadioReceiverActive()) then
+
+                    ImprovedRadio.active = true
                     ImprovedRadio.curSong = tostring(ImprovedRadio.car:GetRadioReceiverTrackName()):sub(20, 29)
                     ImprovedRadio.curSongInfoString = radioData.songHashToInfo[ImprovedRadio.curSong]
 
@@ -69,7 +68,11 @@ function ImprovedRadio:new()
                             ImprovedRadio.skipSong() 
                         end
                     end
+                else
+                    ImprovedRadio.active = false
                 end
+            else
+                ImprovedRadio.active = false
             end
         end
 
@@ -139,10 +142,10 @@ end
 
 function ImprovedRadio.loadReplacements()
 
-    ImprovedRadio.radioDataStationsBak = table.shallow_copy(radioData.radioStationNames)
-    ImprovedRadio.radioDataTracksBak = table.shallow_copy(radioData.songHashToInfo)
+    ImprovedRadio.radioDataStationsBak = table.shallow_copy(ImprovedRadio.radioData.radioStationNames)
+    ImprovedRadio.radioDataTracksBak = table.shallow_copy(ImprovedRadio.radioData.songHashToInfo)
 
-    local replacementTable = IO.readReplacements()
+    local replacementTable = ImprovedRadio.IO.readReplacements()
     for _, replacement in ipairs(replacementTable) do
 
         local name = replacement["name"]
@@ -164,22 +167,22 @@ end
 function ImprovedRadio.enableReplacement(name)
 
     for key, val in pairs(ImprovedRadio.replacementStations[name]) do
-        radioData.radioStationNames[key] = val
+        ImprovedRadio.radioData.radioStationNames[key] = val
     end
 
     for key, val in pairs(ImprovedRadio.replacementTracks[name]) do
-        radioData.songHashToInfo[key] = val
+        ImprovedRadio.radioData.songHashToInfo[key] = val
     end
 end
 
 function ImprovedRadio.disableReplacement(name)
 
     for key, val in pairs(ImprovedRadio.radioDataStationsBak) do
-        radioData.radioStationNames[key] = val
+        ImprovedRadio.radioData.radioStationNames[key] = val
     end
 
     for key, val in pairs(ImprovedRadio.radioDataTracksBak) do
-        radioData.songHashToInfo[key] = val
+        ImprovedRadio.radioData.songHashToInfo[key] = val
     end
 
     for key, val in pairs(ImprovedRadio.ui.replacementsSelected) do
@@ -205,6 +208,7 @@ function ImprovedRadio.skipSong()
 
     if(ImprovedRadio.curStation) then
 
+        math.randomseed(os.time())
         local songs = getStationSongs(ImprovedRadio.curStation)
 
         validSongs = {}
@@ -225,7 +229,7 @@ end
 
 function ImprovedRadio.tuneStation(station)
 
-    local stationIndex = radioData.radioStationIndex[station]
+    local stationIndex = ImprovedRadio.radioData.radioStationIndex[station]
     ImprovedRadio.car:SetRadioReceiverStation(stationIndex)
     ImprovedRadio.curStation = station
 end
@@ -240,7 +244,7 @@ function ImprovedRadio.loadPlaylistTrack(songCode)
         UI.playlistUIStations[UI.parent.playlistCount] = "Select Station"
         ImprovedRadio.playlistSongs[UI.parent.playlistCount] = "Select Track"
     else
-        local stationName = radioData.radioStationNames[getStation(songCode)]
+        local stationName = ImprovedRadio.radioData.radioStationNames[getStation(songCode)]
         UI.playlistUIStations[UI.parent.playlistCount] = stationName
     end
 end
@@ -278,10 +282,11 @@ function ImprovedRadio.playlistNextSong()
         return
     end
 
+    math.randomseed(os.time())
     local nextIndex = 1
     local nextSongCode = "Select Track"
 
-    if(hasValue(ImprovedRadio.playlistSongs, ImprovedRadio.curSong) == false) then -- Requested song it not playing, try again
+    if(hasValue(ImprovedRadio.playlistSongs, ImprovedRadio.curSong) == false) then -- Requested song is not playing, try again
         ImprovedRadio.playlistIndex = ImprovedRadio.playlistIndex - 1
     end
     
@@ -314,7 +319,7 @@ function ImprovedRadio.playlistNextSong()
     local nextStation = getStation(nextSongCode)
     local nextSongInfo = songCodeToInfo(nextSongCode)
 
-    ImprovedRadio.car:SetRadioReceiverStation(radioData.radioStationIndex[nextStation])
+    ImprovedRadio.car:SetRadioReceiverStation(ImprovedRadio.radioData.radioStationIndex[nextStation])
     ImprovedRadio.audio:RequestSongOnRadioStation(nextStation, nextSongInfo[1])
     ImprovedRadio.curStation = nextStation
     return nextSongCode
@@ -324,7 +329,7 @@ end
 
 function getStation(song)
 
-    for key, songList in pairs(radioData.radioStationSongs) do
+    for key, songList in pairs(ImprovedRadio.radioData.radioStationSongs) do
         if(songList:find(song)) then
             return key
         end
@@ -334,7 +339,7 @@ end
 
 function getStationSongs(stationID)
 
-    local songList = radioData.radioStationSongs[stationID]
+    local songList = ImprovedRadio.radioData.radioStationSongs[stationID]
 
     if(songList) then
         local songCodes = {}
@@ -348,7 +353,7 @@ end
 
 function songCodeToInfo(code)
 
-    local songInfoString = radioData.songHashToInfo[code]
+    local songInfoString = ImprovedRadio.radioData.songHashToInfo[code]
     local songInfo = {}
     for info in string.gmatch(songInfoString, "[^%|]+") do
         table.insert(songInfo, info)
